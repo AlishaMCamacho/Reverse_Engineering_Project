@@ -77,7 +77,6 @@ In this notebook, we are reverse engineering five sentences from the story.
 ```{r}
 # Put code to reverse engineer sentence here
 
-
 public_21 <- public |> 
 filter(st =="CA"| st=="NY" | st=="LA" | st=="NC"| st=="WA"| st=="CO" | st=="GA" | st=="MN" | st=="WI" | st=="NH" | st=="MA" | st=="MT" | st=="DE"| st=="ND" | st=="DC" | st=="SD" | st=="SC" | st=="NE" | st=="RI" | st=="TN" | st=="PA" | st=="FL") |> 
   group_by(sch_year) |> 
@@ -98,6 +97,7 @@ public_2021_enrollment <-public_2021$total
 public_2021_enrollment
 
 public_2021_enrollment - public_2019_enrollment
+
 
 # Display results of code below this codeblock
 704593
@@ -128,7 +128,6 @@ p_2022 <- public |>
 # Put code to reverse engineer sentence here
 
 glimpse(private)
-
 
 # Display results of code below this codeblock
 
