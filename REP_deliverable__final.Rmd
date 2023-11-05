@@ -1,0 +1,336 @@
+title: "Reverse Engineering Project: Thousands of kids are missing from school. Where did they go?"
+authors: "Alisha Camacho & Laura Cech"
+date: "11/05/23"
+output:
+  html_document:
+    theme: cerulean
+    highlight: pygments
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction 
+
+In this notebook, we are reverse engineering the story, [Thousands of kids are missing from school. Where did they go?](https://projects.apnews.com/features/2023/missing-children/index.html)
+
+
+**Load libraries**
+Loading required libraries for this analysis.
+
+```{r}
+library(tidyverse)
+library(refinr)
+library(janitor)
+library(lubridate)
+library(readxl)
+library(datasets)
+library(purrr)
+
+```
+
+**Load and Cleaning Data**
+
+In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data
+
+We didn't create a filtered list of the states used at the beginning, which caused us problems later on. In this version, we created a filtered list by state full names and abbreviations. We also realized that the function, "state.abb" automatically removed the district of columbia from the list. We had to manually add that back in to our state abbreviation list. 
+
+
+#Load data
+
+```{r}
+
+population <- read_csv("/Users/AlishaCamacho/Documents/GitHub/Reverse_Engineering_Project/Data/population-by-age.csv")
+
+private <- read_csv("/Users/AlishaCamacho/Documents/GitHub/Reverse_Engineering_Project/Data/private-enrollment-by-grade.csv")
+
+public <- read_csv("/Users/AlishaCamacho/Documents/GitHub/Reverse_Engineering_Project/Data/public-enrollment-by-grade.csv")
+
+missing <- read_excel("/Users/AlishaCamacho/Documents/GitHub/Reverse_Engineering_Project/Data/Missing-Kids-Summary-File.xlsx")
+
+```
+
+
+#extract data from the "missing kids summary" excel file to create a .csv for home school enrollments 
+
+```{r}
+
+homeschool <- read_excel("/Users/AlishaCamacho/Documents/GitHub/Reverse_Engineering_Project/Data/Missing-Kids-Summary-File.xlsx", sheet = "Enrollment Changes")
+
+write.csv(homeschool, "homeschool.csv", row.names = FALSE)
+
+glimpse(homeschool)
+
+```
+
+**cleaned and filtered data**
+
+#create filter for states referenced spelled out
+
+```{r}
+
+full_state_names <- c("california", "new york", "louisiana", "north carolina", "washington", "colorado", "georgia", "minnesota", "wisconsin", "new hampshire", "massachusetts", "montana", "delaware", "north dakota", "district of columbia", "south dakota", "south carolina", "nebraska", "rhode island", "tennessee", "pennsylvania", "florida")
+
+full_state_names
+#confirming 22 in the list
+
+```
+
+
+#create filter for state abbreviations for states referenced
+
+```{r}
+#disclaimer: chatgpt was used to support this code: https://chat.openai.com/share/0b32353b-c809-44d8-a3da-084b83c853ca
+#note that we had to manually add DC into the state abbreviations list 
+
+state_title_case <- map(full_state_names, str_to_title)
+
+state_abbrev <- state.abb[state.name %in% state_title_case]
+state_abbrev <- c(state_abbrev, "DC")
+
+state_abbrev
+
+```
+
+
+```{r}
+#population
+
+population <- population |> 
+  mutate(state = str_to_lower(state))
+
+```
+
+
+```{r}
+#private
+
+glimpse(private)
+
+```
+
+```{r}
+#public
+
+public <- glimpse(public) |>
+  mutate(state = str_to_lower(state))
+
+```
+
+```{r}
+#missing
+
+glimpse(missing)
+
+```
+
+
+```{r}
+#homeschool
+
+homeschool_enrollment <- homeschool |> 
+  clean_names() |> 
+  mutate(state = str_to_lower(state)) |> 
+  mutate(enrollment_type = str_to_lower(enrollment_type)) |> 
+  filter(enrollment_type == "homeschool enrollment")
+
+#new data frame: homeschool_enrollment
+
+```
+
+**Sentences to Engineer**
+In this notebook, we are reverse engineering five sentences from the story.
+
+### Sentence 1
+
+**Sentence text**: Overall, public school enrollment fell by over 700,000 students between the 2019-2020 and 2021-2022 school years in the 21 states plus Washington, D.C., that provided the necessary data.
+
+**Analysis summary**: Write up two to three sentences describing the results of your analysis. Were you able to confirm the finding? If not, why not?
+
+The filtered lists helped us create a filtered dataset for public school enrollment, allowing us to summarize the k-12 total by year and confirm the difference in enrollment as 704,593.
+
+
+```{r}
+
+#determine public school enrollment by school year
+
+public_enrollment<- public |> 
+  filter(state %in% full_state_names) |> 
+  group_by(sch_year) |> 
+  filter(grade == "k_12_total") |> 
+  summarise(total = sum(enrollment))
+
+#filter for school year 2019
+
+public_2019 <- public_enrollment |> 
+  filter(sch_year =="2019-2020") 
+
+public_2019_enrollment <- public_2019$total
+public_2019_enrollment
+
+#filter for school year 2021
+
+public_2021 <- public_enrollment |> 
+  filter(sch_year == "2021-2022")
+
+public_2021_enrollment <- public_2021$total 
+
+#determine difference in enrollment
+
+public_2021_enrollment - public_2019_enrollment
+
+#answer: -704,593
+
+```
+
+
+
+### Sentence 2
+
+**Sentence text**: Some of those students enrolled in private schools. Across the states in the analysis, private-school enrollment grew by about 103,000 students.
+
+**Analysis summary**: We used the state abbreviation filtered list to find the enrollment numbers of private school students in "2021-22" and "2019-2020," and subtracted the difference. Our answer, 102,847 of students, is the same number, if we rounded to 103,000 students enrolled. 
+
+
+```{r}
+
+#determine private school enrollment by school year
+
+private_enrollment <- private |> 
+  filter(state %in% state_abbrev) |> 
+  group_by(sch_year) |> 
+  filter(grade == "k_12_total") |> 
+  summarise(total = sum(enrollment))
+
+private_enrollment
+```
+```{r}
+
+#filter for school year 2019
+
+private_2019 <- private_enrollment |> 
+  filter(sch_year =="2019-2020") 
+
+private_2019_enrollment <-private_2019$total
+private_2019_enrollment
+
+```
+
+```{r}
+
+#filter for school year 2021
+
+private_2021 <- private_enrollment |> 
+  filter(sch_year == "2021-2022")
+
+private_2021_enrollment <- private_2021$total 
+
+private_2021_enrollment
+
+```
+
+
+```{r}
+
+#determine difference in enrollment
+
+private_2021_enrollment - private_2019_enrollment
+
+#answer: 102,847
+
+```
+
+
+### Sentence 3
+
+* **Sentence text**: A much bigger group of students switched to home-schooling. The number of children registered for home-schooling surged by around 184,000.
+
+
+* **Analysis summary**: In this instance, we continue to clean the home school data frame by converting the character values in the 'total_change' column  to numerical values. From there, we summarized the total change column to find a total of 184,047, which rounds down  to the answer of 184,000 students.
+
+
+```{r}
+#continue to clean and filter home school data frame 
+
+homeschool_21 <- homeschool_enrollment |> 
+  filter(state %in% full_state_names) |> 
+  mutate(
+    sum_change = as.numeric(`total_change`)) |> 
+  summarise(sum_change = sum(sum_change, na.rm = TRUE))
+
+homeschool_21
+#sum_change = 184047
+
+```
+
+### Sentence 4
+
+**Sentence text** Some families also moved out of state, accounting for some enrollment decline. And birth rates in some states are falling. The population of school-age kids in the states we studied fell by about 183,000, according to census estimates.
+
+**Analysis summary** We also found that the population fell by 183,486, or rounded down to 183,000. We don't need to filter the dataset for the ages 5-17 (school-age kids) because it was already done. We filtered out the data for July 2020, April 2020, and July 2021 so we could compare and contrast the 2021 and 2020 school year information. When we compared the April 2020 data with the July 2021 data, we arrived at the same conclusion as the authors, which was also noted in their "Readme" file under "Summary data." What remains unclear is why they compared July to April. The number is different when comparing July 2020 with July 2021.  
+
+From here, we group by state, year, and summarized the population. Then we created a pivot data set showing each state in 2020 and 2021. This allowed us to calculate the population shift from April 2020 to July 2021 by creating a column showing the difference.
+
+
+```{r}
+
+# filter data for 2020 and 2021
+population_20_21 <- population |> 
+ filter(state %in% full_state_names) |> 
+ filter(year(est_date) %in% c(2020, 2021)) |> 
+ filter(est_date != ymd("2020-07-01")) 
+
+pop_shift <- population_20_21 |> 
+  group_by(state, est_date) |> 
+  summarise(population = sum(population))
+
+pop_shift
+
+```
+```{r}
+#creating new columns to show each state with both April 2020 and July 2021 population estimates. 
+#using adorn function to create a row with the totals
+
+pop_shift |> 
+  pivot_wider(names_from = est_date, values_from = population) |> 
+  clean_names() |> 
+  mutate(difference = x2020_04_01-x2021_07_01) |> 
+  arrange((difference)) |>
+  adorn_totals()
+
+pop_shift
+```
+
+
+### Sentence 5
+
+**Sentence text**: That leaves an estimated 230,000 students still unaccounted for in the data. These are children who didn’t sign up for private school or home-school or move out of state. They are missing.
+
+
+**Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+
+
+**Public school enrollment dropped by 700,000 students**
+
+The question posed by the article is what happened to 230,000 public school students not accounted for by increases in home school or private school enrollments, or population changes for school-aged children based on census data. 
+
+We know:
+
+1) public school enrollment feel by over 700,00 students. 
+2) private school enrollment increased by 103,000
+3) home school enrollment increased by 184,000
+4) the population of school-age kids decreased by 183,000
+
+This leaves approximately 230,000 students unaccounted for. 
+
+```{r}
+
+700000 - 103000 - 184000 - 183000
+
+```
+
