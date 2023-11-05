@@ -17,8 +17,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction 
 
-In this notebook, we are reverse engineering the story, [Thousands of kids are missing from school. Where did they go?](https://projects.apnews.com/features/2023/missing-children/index.html)
+In this notebook, we are reverse engineering the story, "Thousands of kids are missing from school. Where did they go?" 
 
+Link to data: https://purl.stanford.edu/sb152xr1685
+Link to story: https://projects.apnews.com/features/2023/missing-children/index.html
 
 **Load libraries**
 Loading required libraries for this analysis.
