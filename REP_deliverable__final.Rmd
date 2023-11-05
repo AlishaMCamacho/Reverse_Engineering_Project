@@ -36,11 +36,9 @@ library(purrr)
 
 ```
 
-**Load and Cleaning Data**
+**Load and Cleaning Data** In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data:
 
-In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data
-
-We didn't create a filtered list of the states used at the beginning, which caused us problems later on. In this version, we created a filtered list by state full names and abbreviations. We also realized that the function, "state.abb" automatically removed the district of columbia from the list. We had to manually add that back in to our state abbreviation list. 
+We initially encountered some issues when we didn't create a filtered list of the states. In this version, we created a filtered list by state full names and abbreviations. We also realized that the "state.abb" function automatically removed the District of Columbia from the list,  so we manually added that to our state abbreviation list.
 
 
 #Load data
@@ -154,8 +152,7 @@ In this notebook, we are reverse engineering five sentences from the story.
 
 **Analysis summary**: Write up two to three sentences describing the results of your analysis. Were you able to confirm the finding? If not, why not?
 
-The filtered lists helped us create a filtered dataset for public school enrollment, allowing us to summarize the k-12 total by year and confirm the difference in enrollment as 704,593.
-
+The filtered lists helped us create a filtered dataset for public school enrollment. This allowed us to summarize the total number of students enrolled in K-12 education by year and confirm the difference in enrollment as 704,593.
 
 ```{r}
 
@@ -196,7 +193,7 @@ public_2021_enrollment - public_2019_enrollment
 
 **Sentence text**: Some of those students enrolled in private schools. Across the states in the analysis, private-school enrollment grew by about 103,000 students.
 
-**Analysis summary**: We used the state abbreviation filtered list to find the enrollment numbers of private school students in "2021-22" and "2019-2020," and subtracted the difference. Our answer, 102,847 of students, is the same number, if we rounded to 103,000 students enrolled. 
+**Analysis summary**: We used the state abbreviation filtered list to obtain the enrollment numbers of students in private schools for the academic years "2021-22" and "2019-2020." By calculating the difference between these two figures, we determined private school enrollment increased by 102,847 students, or 103,000 when rounded.  
 
 
 ```{r}
@@ -253,8 +250,7 @@ private_2021_enrollment - private_2019_enrollment
 * **Sentence text**: A much bigger group of students switched to home-schooling. The number of children registered for home-schooling surged by around 184,000.
 
 
-* **Analysis summary**: In this instance, we continue to clean the home school data frame by converting the character values in the 'total_change' column  to numerical values. From there, we summarized the total change column to find a total of 184,047, which rounds down  to the answer of 184,000 students.
-
+* **Analysis summary**: In this step, we proceeded with the cleaning process of the home school data frame by converting the 'total_change' column's character values into numerical figures. Afterwards, we calculated the total change column to obtain an estimated figure of 184,047 students, which was then rounded down to 184,000.
 
 ```{r}
 #continue to clean and filter home school data frame 
@@ -274,7 +270,7 @@ homeschool_21
 
 **Sentence text** Some families also moved out of state, accounting for some enrollment decline. And birth rates in some states are falling. The population of school-age kids in the states we studied fell by about 183,000, according to census estimates.
 
-**Analysis summary** We also found that the population fell by 183,486, or rounded down to 183,000. We don't need to filter the dataset for the ages 5-17 (school-age kids) because it was already done. We filtered out the data for July 2020, April 2020, and July 2021 so we could compare and contrast the 2021 and 2020 school year information. When we compared the April 2020 data with the July 2021 data, we arrived at the same conclusion as the authors, which was also noted in their "Readme" file under "Summary data." What remains unclear is why they compared July to April. The number is different when comparing July 2020 with July 2021.  
+**Analysis summary** We also found that the population fell by 183,486, or rounded down to 183,000. We filtered out the data for July 2020, April 2020, and July 2021 so we could compare and contrast the 2021 and 2020 school year information. When we compared the April 2020 data with the July 2021 data, we arrived at the same conclusion as the authors, which was also noted in their "Readme" file under "Summary data." What remains unclear is why they compared July to April. The number is different when comparing July 2020 with July 2021. 
 
 From here, we group by state, year, and summarized the population. Then we created a pivot data set showing each state in 2020 and 2021. This allowed us to calculate the population shift from April 2020 to July 2021 by creating a column showing the difference.
 
@@ -313,17 +309,13 @@ pop_shift
 
 **Sentence text**: That leaves an estimated 230,000 students still unaccounted for in the data. These are children who didn’t sign up for private school or home-school or move out of state. They are missing.
 
-
-**Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
-
-
-**Public school enrollment dropped by 700,000 students**
+**Analysis summary**:
 
 The question posed by the article is what happened to 230,000 public school students not accounted for by increases in home school or private school enrollments, or population changes for school-aged children based on census data. 
 
 We know:
 
-1) public school enrollment feel by over 700,00 students. 
+1) public school enrollment dropped by over 700,00 students. 
 2) private school enrollment increased by 103,000
 3) home school enrollment increased by 184,000
 4) the population of school-age kids decreased by 183,000
